@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>物聯網期末專題</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!--<script src="https://maps.google.com/maps/api/js?&libraries=geometry"></script>-->
+    <script>
+    	window.onload = function() {
+    		document.getElementById("user-input").addEventListener("keyup", function(event) {
+		        if (event.keyCode === 13) { // Number 13 is the "Enter" key on the keyboard
+		        	 event.preventDefault(); // Cancel the default action, if needed
+		            document.getElementById("submit-button").click(); // Trigger the button element with a click
+		        }
+		    });
+		}
+		function getLocation() {
+			if(parseFloat(document.getElementById("user-input").value) >= 0){
+				navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+			} else {
+				alert("請輸入正確的數值!");
+			}
+		}
+		function successCallback(position) {
+			document.getElementById("submit-button").disabled = true;
+			document.getElementById("submit-button").innerHTML = '<i class="fa fa-circle-o-notch fa-spin"></i>Loading';
+			var distance = document.getElementById("user-input").value;
+			var latlon = position.coords.latitude + "," + position.coords.longitude;
+			var get_result = new XMLHttpRequest();
+			get_result.open("get", "/get-result?center=" + latlon + "&zoom=14&size=300x300&key=AIzaSyBu-916DdpKAjTmJNIgngS6HL_kDIKU0aU&lat=" + position.coords.latitude + "&lon=" + position.coords.longitude + "&distance=" + distance);
+			get_result.onload = function() {
+				var result;
+				if(get_result.responseText == "<table><tr><th>球賽種類</th><th>日期</th><th>時間</th><th>舉辦地點</th><th>參賽隊伍</th></tr></table>"){
+					result = "查無結果";
+				} else {
+					result = get_result.responseText;
+				}
+				document.getElementById("mapholder").innerHTML = "你目前所在位置：<br>緯度: " + position.coords.latitude + "<br>經度: " + position.coords.longitude + "<br><img src='/static/" + latlon + ".png'><br>距離你 " + distance + " 公里以內，將要舉辦的球賽：<br>" + result;
+				document.getElementById("submit-button").innerHTML = "開始查詢";
+				document.getElementById("submit-button").disabled = false;
+			}
+		    get_result.send();
+		}
+		function errorCallback(error) {
+			var errorTypes = {
+				0: "不明原因錯誤",
+				1: "你的裝置拒絕提供定位資訊，請開啟定位功能!",
+				2: "無法取得你的定位資訊",
+				3: "定位資訊查詢逾時"
+			};
+			alert(errorTypes[error.code]);
+			// alert(error.message);  // 測試時用
+		}
+	    /* js geometry API
+	    var p1 = new google.maps.LatLng(parseFloat(position.coords.latitude), parseFloat(position.coords.longitude));
+		var p2 = new google.maps.LatLng(24.801870122541988, 120.97162048393018);
+	    console.log(google.maps.geometry.spherical.computeDistanceBetween(p1, p2));*/
+	</script>
+    <style>
+		*{
+			font-family: "微軟正黑體";
+			/*color: black;*/
+		}
+		html { /* 設定footer置底 */
+		    min-height: 100%;
+		    position: relative;
+		}
+		body {
+			background-color: #dcdcdc;
+			margin: 0px;
+			padding: 0px;
+			min-height: 100%;
+		}
+		header {
+			background-color: #444444;
+			color: white;
+			text-align: center;
+			margin: 0px;
+			font-size: 35px;
+			padding: 10px;
+		}
+		#container {
+			margin: 0 auto;
+			text-align: center;
+			font-size: 20px;
+			margin-top: 20px;
+			margin-bottom: 250px;
+			width: 850px;
+		}
+		#intro {
+			margin: 0 auto;
+			font-size: 24px;
+			width: 550px;
+		}
+		#submit {
+			margin: 10px;
+		}
+		#user-input {
+			font-size: 25px;
+			width: 380px;
+			height: 46px;
+		}
+		.buttonload {
+			background-color: #4CAF50;
+			border: none; /* Remove borders */
+			color: white;
+			padding: 12px 24px;
+			font-size: 22px;
+			border-radius: 10px;
+		}
+		.fa {
+			margin-left: -12px;
+			margin-right: 8px;
+		}
+		table, tr, th, td {
+			margin: 0 auto;
+			border: 1px solid black;
+			border-collapse: collapse;
+			padding: 5px;
+			font-size: 18px;
+		}
+		footer {
+			background-color: #444444;
+			font-size: 20px;
+			color: white;
+			text-align: center;
+			padding-top: 10px;
+			padding-bottom: 10px;
+			position: absolute; /* 設定footer置底 */
+	    	bottom: 0; /* 設定footer置底 */
+	    	width: 100%; /* 設定footer置底 */
+	    	margin-top: 130px;
+		}
+	</style>
+</head>
+<body>
+	<header>
+		交大 物聯網課程 期末專題<br>
+		球賽匯報整合系統<br>
+	</header>
+	<section id="container">
+		<div id="intro">
+			輸入欲查詢之距離 x 後，程式將會詢問你是否要將定位資訊提供給此網站，取得你的位置後，將會列出所有距離你在 x 公里以內之球賽舉辦資訊
+		</div>
+		<div id="submit">
+			<input type="text" id="user-input" placeholder="請輸入欲查詢之範圍(單位：公里)">
+			<button id="submit-button" class="buttonload" onclick="getLocation()">開始查詢</button>
+		</div>
+		<div id="mapholder">
+			<table id="gamelist">
+			</table>
+		</div>
+	</section>
+	<footer>
+		Copyright © 2021 All rights reserved by 公連全婆俠特攻隊.<br>
+		NCTU 物聯網系統開發工具進階實務 final project by<br>
+		組長：資工系 0716208 許永平<br>
+		組員：資工系 0716238 陳昱瑋<br>
+		&emsp;&emsp;&emsp;資工系 0716242 莊舜全
+	</footer>
+</body>
+</html>
